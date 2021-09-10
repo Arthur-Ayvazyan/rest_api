@@ -1,0 +1,32 @@
+node_modules
+build
+npm-debug.log
+.env
+.DS_Store
+.idea
+.nvmrc
+*.log
+package-lock.json
+
+/images
+
+
+
+           *.diff
+           *.err
+           *.orig
+           *.rej
+           *.swo
+           *.swp
+           *.vi
+           *~
+           *.sass-cache
+
+           # OS or Editor folders
+           `.DS_Store`
+           `.Trashes`
+           `._*`
+           Thumbs.db
+
+
+
