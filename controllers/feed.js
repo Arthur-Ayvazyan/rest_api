@@ -37,11 +37,13 @@ exports.createPost = (req, res, next) => {
         error.statusCode = 422;
         throw error;
     }
+
     if (!req.file) {
         const error = new Error('No image provided.');
         error.code = 422;
         throw error;
     }
+
     const imageUrl = req.file.path;
     const {title, content} = req.body;
     let creator;
@@ -127,6 +129,12 @@ exports.updatePost = (req, res, next) => {
                 throw error;
             }
 
+            if(post.creator.toString() !== req.userId) {
+                const error = new Error((`Not authorized!`));
+                error.statusCode = 403;
+                throw error;
+            }
+
             if (imageUrl !== post.imageUrl) {
                 clearImage(post.imageUrl)
             }
@@ -149,9 +157,16 @@ exports.deletePost = (req, res, next) => {
     const postId = req.params.postId;
     Post.findById(postId)
         .then(post => {
+
             if (!post) {
                 const error = new Error((`Post doesn't exist`));
                 error.statusCode = 404;
+                throw error;
+            }
+
+            if(post.creator.toString() !== req.userId) {
+                const error = new Error((`Not authorized!`));
+                error.statusCode = 403;
                 throw error;
             }
             // Check logged in user
@@ -160,11 +175,54 @@ exports.deletePost = (req, res, next) => {
             return Post.findByIdAndRemove(postId)
         })
         .then(result => {
+            return User.findById(req.userId)
+        })
+        .then(user => {
+            user.posts.pull(postId)
+            user.save();
+        })
+        .then(result => {
             res.status(200).json({message: 'Deleted post.'})
         })
         .catch(err => next(err))
+}
 
+exports.getStatus = (req, res, next) => {
+    User.findById(req.userId)
+        .then(user => {
+            if(!user) {
+                const error = new Error((`Not found!`));
+                error.statusCode = 404;
+                throw error;
+            }
+            res.status(200).json({message: 'Status fetched successfully.', status: user.status})
+        })
+        .catch(err => next(err))
+}
 
+exports.updateStatus = (req, res, next) => {
+    const newStatus = req.body.status;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = new Error(('Update failed, empty field'));
+        error.statusCode = 422;
+        throw error;
+    }
+
+    User.findById(req.userId)
+        .then(user => {
+            if(!user) {
+                const error = new Error((`Not found!`));
+                error.statusCode = 404;
+                throw error;
+            }
+            user.status = newStatus;
+            return user.save()
+        })
+        .then(result => {
+            res.status(200).json({message: 'Status updated successfully.', newStatus})
+        })
+        .catch(err => next(err))
 }
 
 const clearImage = filePath => {

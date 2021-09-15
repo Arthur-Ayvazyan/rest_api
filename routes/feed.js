@@ -10,7 +10,7 @@ const feedController = require('../controllers/feed');
 // GET /feed/posts
 router.get('/posts', isAuth, feedController.getPosts)
 
-// POST
+// POST /feed/post
 router.post(
     '/post',
     isAuth,
@@ -25,8 +25,10 @@ router.post(
     feedController.createPost
 )
 
+// GET /feed/post:postId
 router.get('/post/:postId', isAuth, feedController.getPost)
 
+// PUT /feed/post:postId
 router.put(
     '/post/:postId',
     isAuth,
@@ -41,6 +43,24 @@ router.put(
     feedController.updatePost
 );
 
+// DELETE /feed/post:postId
 router.delete('/post/:postId', isAuth, feedController.deletePost);
+
+// GET /feed/user/status
+router.get('/user/status', isAuth, feedController.getStatus)
+
+// UPDATE /feed/user/status
+router.patch(
+    '/user/status',
+    isAuth,
+    [
+        body('status')
+            .trim()
+            .not()
+            .isEmpty()
+            .withMessage(`Status shouldn't be empty`)
+    ],
+    feedController.updateStatus
+)
 
 module.exports = router;
