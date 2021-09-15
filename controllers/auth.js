@@ -3,7 +3,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
-exports.signUp = (req, res, next) => {
+exports.signUp = async (req, res, next) => {
+
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
@@ -12,66 +13,64 @@ exports.signUp = (req, res, next) => {
         error.data = errors.array();
         throw error
     }
-    const {email, name, password} = req.body;
+    const {email, name, password} = req.body
 
-    bcrypt.hash(password, 12)
-        .then(hashedPass => {
-            const user = new User({
-                email,
-                password: hashedPass,
-                name
-            });
-            return user.save()
-        })
-        .then(result => {
-            res.status(201).json({
-                message: 'User created',
-                userId: result._id
-            })
-        })
-        .catch(err => {
-            if (!err.statusCode) {
-                err.statusCode = 500;
-            }
-            next(err)
-        })
+    try{
+        const hashedPass = await bcrypt.hash(password, 12);
+        let user = new User({
+            email,
+            password: hashedPass,
+            name
+        });
+        user = await user.save();
+        res.status(201).json({
+            message: 'User created',
+            userId: user._id
+        });
+
+    }  catch(err) {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err)
+    }
 }
 
-exports.login = (req, res, next) => {
+exports.login = async (req, res, next) => {
+
     const {email, password} = req.body;
-    let loadedUser;
-    User.findOne({email: email})
-        .then(user => {
-            if (!user) {
-                const error = new Error('Wrong login or password.')
-                error.status = 401;
-                throw error
-            }
 
-            loadedUser = user;
-            return bcrypt.compare(password, user.password)
-        })
-        .then(isEqual => {
-            if (!isEqual) {
-                const error = new Error('Wrong login or password.')
-                error.status = 401;
-                throw error
-            }
+    try{
+        const user = await User.findOne({email: email});
+        if (!user) {
+            const error = new Error('Wrong login or password.')
+            error.status = 401;
+            throw error
+        }
 
-            const token = jwt.sign(
-                {
-                    email: loadedUser.email,
-                    userId: loadedUser._id.toString(),
-                },
-                'secret',
-                {expiresIn: '1h'}
-            );
-            res.status(200).json({token: token, userId: loadedUser._id.toString()})
-        })
-        .catch(err => {
-            if (!err.statusCode) {
-                err.statusCode = 500;
-            }
-            next(err)
-        })
+        const isEqualPassword = await bcrypt.compare(password, user.password);
+
+        if (!isEqualPassword) {
+            const error = new Error('Wrong login or password.')
+            error.status = 401;
+            throw error
+        }
+
+        const token = jwt.sign(
+            {
+                email: user.email,
+                userId: user._id.toString(),
+            },
+            'secret',
+            {expiresIn: '1h'}
+        );
+
+        res.status(200).json({token: token, userId: user._id.toString()})
+
+    } catch(err)  {
+        if (!err.statusCode) {
+            err.statusCode = 500;
+        }
+        next(err)
+    }
 }
