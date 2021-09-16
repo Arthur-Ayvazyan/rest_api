@@ -8,6 +8,8 @@ const multer = require('multer');
 const feedRoutes = require('./routes/feed');
 const authRoutes = require('./routes/auth');
 
+const {Server} = require("socket.io");
+
 const app = express();
 
 const fileStorage = multer.diskStorage({
@@ -34,7 +36,7 @@ const fileFilter = (req, file, cb) => {
 // app.use(bodyParser.urlencoded()); // x-www-form-urlencoded <form>
 app.use(bodyParser.json()); // application/json
 app.use(
-    multer({ storage: fileStorage, fileFilter: fileFilter }).single('image')
+    multer({storage: fileStorage, fileFilter: fileFilter}).single('image')
 );
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
@@ -56,12 +58,20 @@ app.use((error, req, res, next) => {
     const status = error.statusCode || 500;
     const message = error.message;
     const data = error.data;
-    res.status(status).json({ message, data });
+    res.status(status).json({message, data});
 });
+
 mongoose
     .connect('mongodb+srv://arthurayvazyan:OllJaODZsCmbNwUx@cluster0.ej3d0.mongodb.net/messages')
     .then(result => {
-        app.listen(process.env.HOST || 8080);
+        const server = app.listen(8080);
+        const io = require('./socket');
+
+        io.init(server);
+
+        io.getIO().on('connection', socket => {
+            console.log('Client connection')
+        });
     })
     .catch(err => {
         console.log(err);
