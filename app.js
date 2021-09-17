@@ -50,6 +50,7 @@ app.use((req, res, next) => {
     next();
 });
 
+
 app.use('/feed', feedRoutes);
 app.use('/auth', authRoutes);
 
@@ -68,7 +69,6 @@ mongoose
         const io = require('./socket');
 
         io.init(server);
-
         io.getIO().on('connection', socket => {
             console.log('Client connection')
         });
