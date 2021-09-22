@@ -1,5 +1,6 @@
-const path = require('path');
+require('dotenv').config();
 
+const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -41,7 +42,7 @@ app.use(
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_HOST || '*');
     res.setHeader(
         'Access-Control-Allow-Methods',
         'OPTIONS, GET, POST, PUT, PATCH, DELETE'
@@ -63,9 +64,9 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-    .connect('mongodb+srv://arthurayvazyan:OllJaODZsCmbNwUx@cluster0.ej3d0.mongodb.net/messages')
+    .connect(process.env.DB_CONNECTION)
     .then(result => {
-        const server = app.listen(8080);
+        const server = app.listen(process.env.PORT || 8080);
         const io = require('./socket');
 
         io.init(server);

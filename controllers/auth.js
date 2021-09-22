@@ -13,9 +13,10 @@ exports.signUp = async (req, res, next) => {
         error.data = errors.array();
         throw error
     }
+
     const {email, name, password} = req.body
 
-    try{
+    try {
         const hashedPass = await bcrypt.hash(password, 12);
         let user = new User({
             email,
@@ -27,8 +28,7 @@ exports.signUp = async (req, res, next) => {
             message: 'User created',
             userId: user._id
         });
-
-    }  catch(err) {
+    } catch (err) {
         if (!err.statusCode) {
             err.statusCode = 500;
         }
@@ -40,8 +40,9 @@ exports.login = async (req, res, next) => {
 
     const {email, password} = req.body;
 
-    try{
+    try {
         const user = await User.findOne({email: email});
+
         if (!user) {
             const error = new Error('Wrong login or password.')
             error.status = 401;
@@ -61,13 +62,13 @@ exports.login = async (req, res, next) => {
                 email: user.email,
                 userId: user._id.toString(),
             },
-            'secret',
+            process.env.JWT_SECRET,
             {expiresIn: '1h'}
         );
 
         res.status(200).json({token: token, userId: user._id.toString()})
 
-    } catch(err)  {
+    } catch (err) {
         if (!err.statusCode) {
             err.statusCode = 500;
         }

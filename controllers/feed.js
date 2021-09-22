@@ -18,6 +18,7 @@ exports.getPosts = async (req, res, next) => {
             .sort({createdAt: -1})
             .skip((currentPage - 1) * perPage)
             .limit(perPage);
+
         res.status(200).json({
             message: 'Fetched posts successfully',
             posts,
@@ -64,7 +65,6 @@ exports.createPost = async (req, res, next) => {
         user.posts.push(post);
         await user.save();
 
-
         io.getIO().emit('posts', {
             action: 'create',
             post: {
@@ -96,6 +96,7 @@ exports.getPost = async (req, res, next) => {
 
     try {
         const post = await Post.findById(postId);
+
         if (!post) {
             const error = new Error((`Post doesn't exist`));
             error.statusCode = 404;
@@ -111,8 +112,10 @@ exports.getPost = async (req, res, next) => {
 }
 
 exports.updatePost = async (req, res, next) => {
+
     const postId = req.params.postId;
     const errors = validationResult(req);
+
     if (!errors.isEmpty()) {
         const error = new Error(('Validation failed, entered data is incorrect'));
         error.statusCode = 422;
@@ -159,14 +162,15 @@ exports.updatePost = async (req, res, next) => {
             action: 'update',
             post: post
         });
-        res.status(200).json({message: 'Updated successfully.', post})
 
+        res.status(200).json({message: 'Updated successfully.', post})
     } catch (err) {
         next(err)
     }
 }
 
 exports.deletePost = async (req, res, next) => {
+
     const postId = req.params.postId;
     const post = await Post.findById(postId);
 
@@ -175,6 +179,7 @@ exports.deletePost = async (req, res, next) => {
         error.statusCode = 404;
         throw error;
     }
+
     if (post.creator.toString() !== req.userId) {
         const error = new Error((`Not authorized!`));
         error.statusCode = 403;
@@ -185,7 +190,6 @@ exports.deletePost = async (req, res, next) => {
 
     try {
         await Post.findByIdAndRemove(postId);
-
         let user = await User.findById(req.userId);
         user.posts.pull(postId);
         io.getIO().emit('posts', {
@@ -199,8 +203,10 @@ exports.deletePost = async (req, res, next) => {
 }
 
 exports.getStatus = async (req, res, next) => {
+
     try{
         let user = await User.findById(req.userId);
+
         if (!user) {
             const error = new Error((`Not found!`));
             error.statusCode = 404;
@@ -214,6 +220,7 @@ exports.getStatus = async (req, res, next) => {
 }
 
 exports.updateStatus = async (req, res, next) => {
+
     const newStatus = req.body.status;
     const errors = validationResult(req);
 
@@ -233,7 +240,6 @@ exports.updateStatus = async (req, res, next) => {
         user.status = newStatus;
         await user.save();
         res.status(200).json({message: 'Status updated successfully.', newStatus});
-
     } catch (err) {
         next(err)
     }

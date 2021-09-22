@@ -6,7 +6,7 @@ module.exports = {
     init: httpServer => {
         io = new Server(httpServer, {
             cors: {
-                origin: "*",
+                origin: process.env.CLIENT_HOST || '*',
                 methods: ['OPTIONS', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
                 allowedHeaders: ["Content-Type", "Authorization"],
                 credentials: true
